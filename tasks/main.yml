@@ -1,0 +1,92 @@
+# code: language=ansible
+---
+- name: Make ~/.aws directory
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "~/.aws"
+  register: result
+  ignore_errors: true
+
+- name: Touch AWS Config
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: touch
+  loop:
+    - "~/.aws/config"
+    - "~/.aws/credentials"
+  when: aws_id and aws_key
+
+- name: Copy file with ssh
+  ansible.builtin.blockinfile:
+    path: ~/.aws/config
+    block: |
+      [profile {{ env_profile }}]
+      region = ap-northeast-2
+      output = json
+  when: env_profile
+  register: result
+
+- name: Add AWS Credentials
+  ansible.builtin.blockinfile:
+    path: ~/.aws/credentials
+    block: |
+      [{{ env_profile }}]
+      aws_access_key_id = {{ aws_id }}
+      aws_secret_access_key = {{ aws_key }}
+  when: aws_id and aws_key
+  register: result
+
+- name: Print variables
+  ansible.builtin.debug:
+    var: result
+
+- name: Replace AWS Environment [DEV]
+  become: true
+  become_user: root
+  ansible.builtin.lineinfile:
+    path: "{{ mainrc }}"
+    regexp: '{{ item.from }}'
+    line: '{{ item.to }}'
+    state: present
+    backup: true
+  with_items:
+    - { from: '^(#.)?export DEV_AWS_ID', to: 'export DEV_AWS_ID="{{ dev_aws_id if dev_aws_id else "# export DEV_AWS_ID=__YOUR_ID__" }}"' }
+  register: result
+  when: dev_aws_id
+  tags: dev
+
+- name: Replace AWS Environment [STG]
+  become: true
+  become_user: root
+  ansible.builtin.lineinfile:
+    path: "{{ mainrc }}"
+    regexp: '{{ item.from }}'
+    line: '{{ item.to }}'
+    state: present
+    backup: true
+  with_items:
+    - { from: '^(#.)?export STG_AWS_ID', to: 'export STG_AWS_ID="{{ stg_aws_id if stg_aws_id else "# export STG_AWS_ID=__YOUR_ID__" }}"' }
+  register: result
+  when: stg_aws_id
+  tags: stg
+
+- name: Replace AWS Environment [PRD]
+  become: true
+  become_user: root
+  ansible.builtin.lineinfile:
+    path: "{{ mainrc }}"
+    regexp: '{{ item.from }}'
+    line: '{{ item.to }}'
+    state: present
+    backup: true
+  with_items:
+    - { from: '^(#.)?export PRD_AWS_ID', to: 'export PRD_AWS_ID="{{ prd_aws_id if prd_aws_id else "# export PRD_AWS_ID=__YOUR_ID__" }}"' }
+  register: result
+  when: prd_aws_id
+  tags: prd
+
+# - name: Print variables
+#   ansible.builtin.debug:
+#     var: result

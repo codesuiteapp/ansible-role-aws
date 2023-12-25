@@ -1,0 +1,5 @@
+---
+env_profile: "default"
+dev_aws_id: ""
+stg_aws_id: ""
+prd_aws_id: ""
