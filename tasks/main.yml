@@ -52,7 +52,7 @@
     state: present
     backup: true
   with_items:
-    - { from: '^(#.)?export DEV_AWS_ID', to: 'export DEV_AWS_ID="{{ dev_aws_id if dev_aws_id else "# export DEV_AWS_ID=__YOUR_ID__" }}"' }
+    - { from: '^(#)?(.)?export DEV_AWS_ID', to: 'export DEV_AWS_ID="{{ dev_aws_id if dev_aws_id else "# export DEV_AWS_ID=__YOUR_ID__" }}"' }
   register: result
   when: dev_aws_id
   tags: dev
@@ -67,7 +67,7 @@
     state: present
     backup: true
   with_items:
-    - { from: '^(#.)?export STG_AWS_ID', to: 'export STG_AWS_ID="{{ stg_aws_id if stg_aws_id else "# export STG_AWS_ID=__YOUR_ID__" }}"' }
+    - { from: '^(#)?(.)?export STG_AWS_ID', to: 'export STG_AWS_ID="{{ stg_aws_id if stg_aws_id else "# export STG_AWS_ID=__YOUR_ID__" }}"' }
   register: result
   when: stg_aws_id
   tags: stg
@@ -82,7 +82,7 @@
     state: present
     backup: true
   with_items:
-    - { from: '^(#.)?export PRD_AWS_ID', to: 'export PRD_AWS_ID="{{ prd_aws_id if prd_aws_id else "# export PRD_AWS_ID=__YOUR_ID__" }}"' }
+    - { from: '^(#)?(.)?export PRD_AWS_ID', to: 'export PRD_AWS_ID="{{ prd_aws_id if prd_aws_id else "# export PRD_AWS_ID=__YOUR_ID__" }}"' }
   register: result
   when: prd_aws_id
   tags: prd
