@@ -46,7 +46,7 @@
   become: true
   become_user: root
   ansible.builtin.lineinfile:
-    path: "{{ mainrc }}"
+    path: "{{ zshenv }}"
     regexp: '{{ item.from }}'
     line: '{{ item.to }}'
     state: present
@@ -61,7 +61,7 @@
   become: true
   become_user: root
   ansible.builtin.lineinfile:
-    path: "{{ mainrc }}"
+    path: "{{ zshenv }}"
     regexp: '{{ item.from }}'
     line: '{{ item.to }}'
     state: present
@@ -76,7 +76,7 @@
   become: true
   become_user: root
   ansible.builtin.lineinfile:
-    path: "{{ mainrc }}"
+    path: "{{ zshenv }}"
     regexp: '{{ item.from }}'
     line: '{{ item.to }}'
     state: present
