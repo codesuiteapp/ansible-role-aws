@@ -9,14 +9,15 @@
   register: result
   ignore_errors: true
 
-- name: Touch AWS Config
+- name: Touch AWS Config files
   ansible.builtin.file:
     path: "{{ item }}"
     state: touch
+    mode: '0600'
   loop:
     - "~/.aws/config"
     - "~/.aws/credentials"
-  when: aws_id and aws_key
+  when: aws_id is defined and aws_key is defined
 
 - name: Copy file with ssh
   ansible.builtin.blockinfile:
@@ -25,7 +26,7 @@
       [profile {{ env_profile }}]
       region = ap-northeast-2
       output = json
-  when: env_profile
+  when: env_profile is defined
   register: result
 
 - name: Add AWS Credentials
@@ -35,7 +36,7 @@
       [{{ env_profile }}]
       aws_access_key_id = {{ aws_id }}
       aws_secret_access_key = {{ aws_key }}
-  when: aws_id and aws_key
+  when: aws_id is defined and aws_key is defined
   register: result
 
 - name: Print variables
@@ -47,45 +48,20 @@
   become_user: root
   ansible.builtin.lineinfile:
     path: "{{ zshenv }}"
-    regexp: '{{ item.from }}'
-    line: '{{ item.to }}'
+    regexp: '^(#)?(.)?export {{ item.env }}_AWS_ID'
+    line: 'export {{ item.env }}_AWS_ID="{{ item.aws_id if item.aws_id else "# export " + item.env + "_AWS_ID=__YOUR_ID__" }}"'
     state: present
     backup: true
-  with_items:
-    - { from: '^(#)?(.)?export DEV_AWS_ID', to: 'export DEV_AWS_ID="{{ dev_aws_id if dev_aws_id else "# export DEV_AWS_ID=__YOUR_ID__" }}"' }
+  loop:
+    - { env: 'DEV', aws_id: '{{ dev_aws_id | default("") }}' }
+    - { env: 'STG', aws_id: '{{ stg_aws_id | default("") }}' }
+    - { env: 'PRD', aws_id: '{{ prd_aws_id | default("") }}' }
+  when: item.aws_id | default("") != ""
   register: result
-  when: dev_aws_id
-  tags: dev
-
-- name: Replace AWS Environment [STG]
-  become: true
-  become_user: root
-  ansible.builtin.lineinfile:
-    path: "{{ zshenv }}"
-    regexp: '{{ item.from }}'
-    line: '{{ item.to }}'
-    state: present
-    backup: true
-  with_items:
-    - { from: '^(#)?(.)?export STG_AWS_ID', to: 'export STG_AWS_ID="{{ stg_aws_id if stg_aws_id else "# export STG_AWS_ID=__YOUR_ID__" }}"' }
-  register: result
-  when: stg_aws_id
-  tags: stg
-
-- name: Replace AWS Environment [PRD]
-  become: true
-  become_user: root
-  ansible.builtin.lineinfile:
-    path: "{{ zshenv }}"
-    regexp: '{{ item.from }}'
-    line: '{{ item.to }}'
-    state: present
-    backup: true
-  with_items:
-    - { from: '^(#)?(.)?export PRD_AWS_ID', to: 'export PRD_AWS_ID="{{ prd_aws_id if prd_aws_id else "# export PRD_AWS_ID=__YOUR_ID__" }}"' }
-  register: result
-  when: prd_aws_id
-  tags: prd
+  tags:
+    - dev
+    - stg
+    - prd
 
 # - name: Print variables
 #   ansible.builtin.debug:
